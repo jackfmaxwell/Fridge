@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+
+  <link rel="stylesheet" type="text/css" media="screen and (min-width: 813px)" href="/styles/main.css"/>
+  <link rel="stylesheet" type="text/css" media="screen and (max-width: 812px)" href="/styles/ios.css">
+
+  <script src="https://www.gstatic.com/firebasejs/8.4.3/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.4.3/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.4.3/firebase-firestore.js"></script>
+
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script> 
+
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+
+  <script>
+    var firebaseConfig = {
+      apiKey: "AIzaSyCzCkPU3y7t91XAr-BQ_XBqjI7X4nJMdug",
+      authDomain: "fridge-track.firebaseapp.com",
+      databaseURL: "https://fridge-track-default-rtdb.firebaseio.com",
+      projectId: "fridge-track",
+      storageBucket: "fridge-track.appspot.com",
+      messagingSenderId: "403211248361",
+      appId: "1:403211248361:web:e9fd5132f3d03d6e00c678"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <!--This must be loaded before login because of function calls-->
+  <script src="app.js" defer></script>
+  <script src="fridgeItems.js" defer></script> 
+  <script src="login.js" defer></script>
+
+  <head>
+    <title>Fridge Track</title>
+    <link rel="icon" href="/img/outline_kitchen_black_24dp.png">
+  </head>
+
+  <body>
+    <section id="signInSection" style="z-index:1">
+      <img class="icon" src="img/outline_kitchen_black_24dp.png">
+      <h4 class=" h4 w3-center">Fridge Track</h4>
+      <button id="signInBtn" class="inputbutton w3-center"> Sign in with Google</button>
+      <h6 class=" h6 w3-center">If you are unable to sign in, please contact the developer.</h6>
+    </section>
+
+    <section id="welcomeSection" class="welcomeFade w3-center" style="z-index:1">
+      <h3 id="userDetails" class="w3-center"></h3>
+      <img class="icon2" src="img/outline_kitchen_black_24dp.png">
+    </section>
+
+
+    <section id="topBar" style="display:none; z-index: 1">
+      <button id="grocery" class= "navBtn material-icons">local_grocery_store</button>
+      <button id="fridge" class= "navBtn material-icons">kitchen</button>
+      <button id="recipes" class= "navBtn material-icons">restaurant_menu</button>
+      <button id="tracker" class= "navBtn material-icons">date_range</button>
+      <button id="expenses" class= "navBtn material-icons">savings</button>
+    </section>
+
+    
+    <section id="contentSection" style="display: none;">
+      <section id="groceryPage" hidden=true class="w3-animate-left">
+        <table class="items" style="width:100%;" id="groceryItemsTable">
+          <!--This is dynamically added to-->
+        </table>
+        
+
+        <span id="groceryPageContent" class="w3-center" style="width:100%;">
+          <button id="groceryPageAddManualBtn" class="inputbutton w3-center" style="margin-top:25%; margin-left:27%;">Manual input</button> <br>
+          
+          <div id="groceryPagePopup" hidden=true style="background-color: grey; padding:12px; text-align: justify; width:100%; margin-top:25%; margin-bottom:20%;">
+            <h6>This item already exists in the general pool. Would you like to replace the values?</h6>
+            <button id="groceryPopUpReplaceBtn" style="padding:6px 24px; font-size:14px;" class="inputbutton w3-center">Replace</button>
+            <button id="groceryPopupCancelBtn" style="padding:6px 24px; font-size:14px;" class="inputbutton w3-center">Cancel</button><br>
+          </div>
+            
+          <div id="groceryPageManualForm" hidden=true style="background-color: grey; padding:12px; text-align: justify; width:100%; margin-top:25%; margin-bottom:20%;">
+            
+            <label>Food Name<i> (Singular!)</i></label>
+            <input type="text" name="food name" style="width:120px;"><br>
+
+            <label>Where its stored</label>
+            <select name="food type">
+              <option value="fridge">Fridge</option>
+              <option value="pantry">Pantry</option>
+              <option value="freezer">Freezer</option>
+            </select><br>
+
+            <label>Food Category</label>
+            <select name="food category">
+              <option value="grains">Grains</option>
+              <option value="vegetable">Vegetables</option>
+              <option value="fruits">Fruits</option>
+              <option value="dairy">Dairy</option>
+              <option value="protein">Protein</option>
+              <option value="frozenMeal">Frozen Meal</option>
+              <option value="hotMeal">Hot Meal</option>
+            </select><br>
+
+
+            <label>Food Quantity: </label><b style="display:inline-block; width:25px !important;" id="manualInput_quantity">1</b>
+            <input id="quantityRangeInput" type="range" name="food quantity" min=1 max=19 step=1 value=1><br>
+
+            <label>Lifespan: </label><b style="display:inline-block; width:70px !important;" id="manualInput_lifespan">3 days</b>
+            <input id="lifespanRangeInput" type="range" name="food lifespan" min=1 max=99 step=1 value=3><br>
+
+            <label>Price:  $</label>
+            <input style="width:60px" id="priceInput" type="number" name="price"><br>
+            
+            <button id="manualForm_Submit" class="inputbutton w3-center" style="padding:6px 28px;">Submit</button>
+            <button id="manualForm_Cancel" class="inputbutton w3-center" style="padding:6px 28px;">Cancel</button>
+
+          </div>
+
+          <button id="groceryPageAddRepeatBtn" class="inputbutton w3-center" style="margin-top:8%; margin-bottom:20%; margin-left:25%;">Add repeat item</button>
+          <div id="groceryPageRepeatForm" hidden=true style="background-color: grey; padding:12px; text-align: justify; width:100%; margin-top:15%; margin-bottom:20%;">
+            <div style="background-color: grey; padding:12px; text-align: justify; width:100%; margin-top:15%; margin-bottom:20%;">
+              <button id="repeatForm_Cancel" class="inputbutton w3-center" style="padding:6px 28px;">Cancel</button>
+            </div>
+            <table class="items" id="repeatItemsTable">
+
+            </table>
+            
+          </div>
+        
+        </span>
+       
+        
+      </section>
+  
+      
+       <section id="fridgePage" style="margin-top:4px;" class="w3-animate-right">
+          <div style="height:60px; background-color: #e5e3f1; border: 3px solid #a29cf4;">
+          </div>
+          
+          <table class="items" style="width:100%; margin-top:8px;" id="fridgeItemsTable">
+            <!--Dynamically added to-->
+            <tbody id="fridgeTableBody">
+
+            </tbody>
+          </table>
+       </section>
+  
+      <section id="recipesPage" hidden=true class="w3-animate-right"> 
+        <button id="myRecipesBtn" class="inputbutton">My Recipes</button>
+        <button id="sharedRecipesBtn" style="position:absolute; right:0;" class="inputbutton">Shared Recipes</button>
+        <table hidden=true class="items" style="width:100%; margin-top:8px;" id="myrecipeItemsTable">
+          <!--Dynamically added to-->
+          <tbody id="myrecipeItemsTable">
+            <tr style="background-color:#a6edb2;">
+              <td style="width:60%">Pasta and Mealballs</td>
+              <td>3 servings</td>
+            </tr>
+            <tr>
+              <td style="width:60%">Chicken Stirfry</td>
+              <td>5 servings</td>
+            </tr>
+          </tbody>
+        </table>
+        <table  class="items" style="width:100%; margin-top:8px;" id="sharedrecipeItemsTable">
+          <!--Dynamically added to-->
+          <tbody id="sharedrecipeItemsTable">
+          </tbody>
+          
+            
+        </table>
+        <button style="margin-left:27%;" class="inputbutton">Add Recipe</button>
+      </section>
+      <section id="recipeHighlights">
+        <table class="items" style="width:100%">
+          <div class="swipe-container" ontouchend="handleSwipe()">
+            <!-- left action -->
+            <div class="action left">
+              <i class="material-icons">favorite</i>
+            </div>
+            <!-- swipeable element -->
+            <div class="swipe-element">
+              Swipe me to the left or right
+            </div>
+            <!-- right action -->
+            <div class="action right">
+              <i class="material-icons">done</i>
+            </div>
+          </div>
+        </table>
+      </section>
+  
+      <section id="trackerPage" hidden=true class="w3-animate-right" style="width:100%;">
+        <div id="dayHighlightPopup" class="w3-animate-bottom" hidden=true style="margin-bottom: 2%;">
+          <table class="items" style="background-color: grey;">
+            <tr>
+              <td id="dayHeader">Friday the 17th</td>
+            </tr>
+            <tbody id="">
+              <tr style="background-color: #a6edb2">
+                <td>Breakfast: </td>
+                
+                <td>Oatmeal</td>
+              </tr>
+              <tr style="background-color: #a6edb2">
+                <td>Lunch: </td>
+                
+                <td>Meatball Sub</td>
+              </tr>
+              <tr style="background-color: #c5c5c5;">
+                <td>Dinner: </td>
+                
+                <td>StirFry</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="calendarSection">
+          <table class="calendar" style="width:100%;">
+            <div style="background-color: #e5e3f1; border: 3px solid #a29cf4; border-bottom: 0; padding-bottom:10px;">
+              <h6 style="text-align: center; font-size:20px;">September</h6>
+              <tr>
+                <td>Mon</td>
+                <td>Tue</td>
+                <td>Wed</td>
+                <td>Thu</td>
+                <td>Fri</td>
+                <td>Sat</td>
+                <td>Sun</td>
+              </tr>
+            </div>
+            
+            <tbody id="calendarBody">
+              
+
+            </tbody>
+          </table>
+          
+        </div>
+        <button id="editScheduleBtn" style="margin-left:27%; margin-top:5%;" class="inputbutton">Edit Schedules</button>
+        <div class="w3-animate-bottom" id="schedulePage" hidden=true>
+          <h6 style="text-align: center; font-size:20px; background-color: #e5e3f1; border: 3px solid #a29cf4;">Current Meal Plan: Banana Plan</h6>
+          <table class="items" style="width:100%;">
+            <tbody>
+              <tr>
+                <th>Monday</th>
+              </tr>
+              <tr>
+                <th>Tuesday</th>
+              </tr>
+              <tr>
+                <th>Wednesday</th>
+              </tr>
+              <tr>
+                <th>Thursday</th>
+              </tr>
+              <tr>
+                <th>Friday</th>
+              </tr>
+              <tr>
+                <th>Saturday</th>
+              </tr>
+              <tr>
+                <th>Sunday</th>
+              </tr>
+            </tbody>
+          </table>
+          <table class="items" style="width:100%">
+            <tbody>
+              <tr>
+
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+  
+      <section id="expensesPage" hidden=true class="w3-animate-right">
+        <h6>Expenses Page</h6>
+        <div style="height:60px; background-color: #e5e3f1; border: 3px solid #a29cf4;">
+        
+        </div>
+        <h6>Graphs</h6>
+        <h6>Average Spending on <b>Breakfast</b> is: $8.65</h6>
+
+      </section>
+      
+    </section>
+    
+  </body>
+
+</html>
+
+

@@ -1,0 +1,170 @@
+<!--OLD FILE, REPLACING WITH ONE PAGE HTML SITE index.html -->
+
+<!DOCTYPE html>
+<html>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" type="text/css" media="screen and (min-width: 813px)" href="/styles/main.css"/>
+  <link rel="stylesheet" type="text/css" media="screen and (max-width: 812px)" href="/styles/ios.css">
+
+  <script src="https://www.gstatic.com/firebasejs/8.4.3/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.4.3/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.4.3/firebase-firestore.js"></script>
+
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script> 
+
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+  <script src="app.js" defer></script> 
+    
+  <head>
+    <title>Fridge Track</title>
+    <link rel="icon" href="/img/outline_kitchen_black_24dp.png">
+  </head>
+
+  <body>
+
+    <section id="fridgePage" class="w3-center" hidden=true>
+      <button class="navBtn material-icons">local_grocery_store</button>
+      <button class="navBtn material-icons">kitchen</button>
+      <button class="navBtn material-icons">restaurant_menu</button>
+      <button class="navBtn material-icons">date_range</button>
+      <button class="navBtn material-icons">savings</button>
+    </section>
+
+    <section id="signedInSection" hidden=false;>
+      <div id="outer" class="w3-animate-opacity">
+            <div class="inner"><button id="viewFridge" class="buttonspan" type="submit">View Fridge</button></div>
+            <div class="inner"><button id="viewMealTracker" class="buttonspan" type="submit">Add Meal to Tracker</button></div>
+            <div class="inner"><button id="viewAddMeal" class="buttonspan" type="submit">Add Cooked Meal</button></div>
+      </div>
+    </section>
+
+    <section id="fridgePage" hidden=true;>
+      <script src="fridgePage.js" defer></script>
+  
+      <section id="fridgeItems" hidden="true">  
+      <h2>Your Fridge:</h2>
+      <div id="outer" style="text-align: left;">
+        <div class="inner">Sort by</div>
+        <div class="inner" style="padding-left: 3%;">
+          <div class="dropdown">
+            <button class="dropbtn">Meals</button>
+              <div class="dropdown-content">
+                <button id="fridgeMealsDropDownLeftovers">Leftovers</button>
+                <button id="fridgeMealsDropDownFastFood">FastFood/TakeOut</button>
+                <button id="fridgeMealsDropDownFrozenMeal">Frozen Meals</button>
+              </div>
+          </div>
+        </div>
+        <div class="inner" style="padding-left: 3%;">
+          <div class="dropdown">
+            <button class="dropbtn">Expiring</button>
+              <div class="dropdown-content">
+                <button id="fridgeExpiringDropDownExpired">Already Expired</button>
+                <button>Expiring Soon</button>
+              </div>
+          </div>
+        </div>
+        <div class="inner" style="padding-left: 3%;">
+          <div class="dropdown">
+            <button class="dropbtn">Food Group</button>
+              <div class="dropdown-content">
+                <button id="fridgeFoodGroupDropDownFruit">Fruit</button>
+                <button id="fridgeFoodGroupDropDownVegetable">Vegetable</button>
+                <button id="fridgeFoodGroupDropDownGrain">Grains</button>
+                <button id="fridgeFoodGroupDropDownDairy">Dairy</button>
+                <button id="fridgeFoodGroupDropDownMeat">Meat</button>
+                <button id="fridgeFoodGroupDropDownNuts">Nuts</button>
+                <button id="fridgeFoodGroupDropDownSweets">Sweets</button>
+              </div>
+          </div>
+        </div>
+        <div class="inner" style="padding-left: 3%;">
+          <div class="dropdown">
+            <button class="dropbtn">Category</button>
+              <div class="dropdown-content">
+                <button id="fridgeCategoryDropDownFridge">Fridge</button>
+                <button id="fridgeCategoryDropDownFreezer">Freezer</button>
+                <button id="fridgeCategoryDropDownPantry">Pantry</button>
+              </div>
+          </div>
+        </div>
+        <div class="inner" style="padding-left: 3%;">
+          <button class="button" id="resetFridgeSort" style="color:red;">Reset</button>
+        </div>
+      </div>
+    
+      <div style="padding-top: 1%;">
+        <table id="tableId" class="interactable">
+            <tr>
+              <th>Food Name</th>
+              <th width=130px;>Total Quantity</th>
+            </tr>
+            <tbody id = "tbody"></tbody>
+          </tbody>
+        </table>
+      </div>
+    
+    
+      </section>
+    
+      <section id="foodLookUp" hidden=true>
+        <div>
+          <div id="outer">
+            <div class="inner-left"><h6>Food Quantities</h6></div>
+            <div class="inner-right"><button id="closeFoodLookUp"class="close">x</button></div>
+          </div>
+          
+            <table>
+                <tr>
+                  <th>Quantity</th>
+                  <th>Expiry Date</th>
+                </tr>
+                <tbody id = "foodLookUp_quantities"></tbody>
+              </tbody>
+            </table>
+          <h6>Price History:</h6>
+          <table>
+            <tbody id = "foodLookUp_priceHistory">
+              <tr>
+                <th>Price</th>
+                <th>Store</th>
+                <th>Purchase Date</th>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="priceHistoryChart" text-align=center></div>
+      </section>
+    
+      <section id="recipesItem">  
+        <h2>Your Recipes:</h2>
+        <div style="padding-top: 1%;">
+          <table id="recipeTableId" class="interactable">
+              <tr>
+                <th>Recipe Name</th>
+                <th width=130px;>Servings</th>
+                <th width=180px; id="recipeCanBeMade">Can I Make This?</th>
+              </tr>
+              <tbody id = "tbody"></tbody>
+            </tbody>
+          </table>
+        </div>
+      </section>
+  
+    </section>
+  
+    <section id="mealTrackerPage" hidden=true;>
+  
+    </section>
+    
+
+  </body>
+
+</html>
+
+
