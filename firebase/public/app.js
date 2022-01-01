@@ -1,10 +1,13 @@
+
 function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
-  }
+}
 
 function dayOfWeekAsInteger(day) {
-    var days = ["Saturday","Sunday","Monday","Tuesday","Wednesday","Thursday","Friday"];
-    return days[day];
+    
+    var days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday", "Saturday"];
+    console.log("arg: " + day + " result: " + days[day-1]);
+    return days[day-1];
 }
   
 Date.prototype.addDays = function(days) {
@@ -19,13 +22,16 @@ function minTwoDigits(n) {
 //wait until login is complete
 startFunction();
 function startFunction(){
-    var interval = setInterval(function() {
-        if (userProfile) {
-            contentSection.style.display="block"; topBarElement.style.display="block";
-            clearInterval(interval);
-            populateFridgeTable();
-        }
-      }, 200); 
+    setTimeout(function(){
+        var interval = setInterval(function() {
+            if (userProfile) {
+                contentSection.style.display="block"; topBarElement.style.display="block";
+                clearInterval(interval);
+                populateFridgeTable();
+            }
+          }, 200); 
+    }, 6000);
+    
     
   }
   
@@ -90,6 +96,7 @@ function viewFridge(){
 
 recipesBtn.onclick = () => viewRecipe();
 function viewRecipe(){
+    console.log("triggered");
     groceryPage.hidden=true;
     fridgePage.hidden=true;
     recipesPage.hidden=false;
@@ -154,7 +161,7 @@ function updateLifespanText(){
     manualInput_lifespan.textContent = lifespanRangeInput.value + " days";
 }
 
-//The two buttons for adding grocery items, manual and repeat
+//The two buttons for adding grocery items, manual and `repeat`
 const groceryPage_repeatBtn = document.getElementById("groceryPageAddRepeatBtn");
 const groceryPage_manualBtn = document.getElementById("groceryPageAddManualBtn");
 
@@ -167,18 +174,49 @@ function showRepeatForm(){
     groceryPage_repeatBtn.hidden=true;
     window.scrollTo(0,document.body.scrollHeight);
 }
+const repeatForumCancelBtn = document.getElementById('repeatForm_Cancel');
+repeatForumCancelBtn.onclick=()=> cancelRepeatForm();
+function cancelRepeatForm(){
+    repeatForum.hidden=true;
+    groceryPage_manualBtn.hidden=false;
+    groceryPage_repeatBtn.hidden=false;
+    window.scrollTo(0,document.body.scrollHeight);
+}
 const repeatTable = document.getElementById("repeatItemsTable");
 function addItemFromRepeat() {
     // Here, `this` refers to the element the event was hooked on
     var name = this.cells[0].innerHTML; //get the name from the row we click on
+
+    //get the doc from food collection and add to user fridge
+   
+    const foodlist = firebase.firestore().collection('food').get()
+    .then((snapshot)=>{
+        var foodlifespan=-1;
+        snapshot.forEach(item=>{
+            var data = item.data();
+            if(data.name==name){
+                //found the item
+                foodlifespan = data.lifespan;
+            }
+        });
+        if(foodlifespan!=-1){
+            //we found it
+            console.log(name);
+            cancelRepeatForm();
+            showManualForm();
+            foodNameInput.value=name;
+            lifespanRangeInput.value = foodlifespan;
+            updateLifespanText();
+        }
+    });
     
-    console.log(name);
+
+   
     
 }
 
 function populateRepeatTable(){
     
-
     const foodlist = firebase.firestore().collection('food').get()
     .then((snapshot)=>{
         snapshot.forEach(item=>{
@@ -373,16 +411,15 @@ const fridgeTable = document.getElementById("fridgeItemsTable");
 const fridgeTableBody = document.getElementById("fridgeTableBody");
 function populateFridgeTable(){
     fridgeTableBody.innerHTML='';
-    /*
+    console.log("populating fridge");
     var fridgeItems = userProfile.ref.collection('fridge').get();
     fridgeItems.then((snapshot)=>{
         snapshot.forEach(item=>{
             let data = item.data();
+            console.log("populating fridge with: ");
+            console.log(data);
             
-
-
             var totalQuantity = 0;
-
             let today = new Date();
             let soonestExpiryDate = new Date(today);
             soonestExpiryDate.setDate(soonestExpiryDate.getDate()+99); //future dates are > past dates
@@ -392,10 +429,8 @@ function populateFridgeTable(){
                 quantitiesSnapshot.forEach(quantityItem=>{
                     let quantityData = quantityItem.data();
                     totalQuantity = totalQuantity + quantityData.quantity;
-
                     //compare the expiry Date
                     let expiryDate = quantityData.expiryDate.toDate();
-
                     if(expiryDate<soonestExpiryDate){
                         soonestExpiryDate = (expiryDate);
                     }
@@ -404,33 +439,29 @@ function populateFridgeTable(){
                 var swipeContainer = document.createElement('div');
                 swipeContainer.className = "swipe-container w3-animate-bottom";
                 swipeContainer.ontouchend = handleSwipe;
-
                 var swipeableElement = document.createElement('div');
                 swipeableElement.className = "swipe-element";
-
                 var quantitySpan = document.createElement('span');
                 quantitySpan.className = "swipe-element-spans";
                 quantitySpan.style.left="0";
                 quantitySpan.style.paddingLeft="8px";
                 quantitySpan.style.fontSize="16px";
                 quantitySpan.textContent="x" + totalQuantity;
-
                 var nameSpan = document.createElement('span');
                 nameSpan.className ="swipe-element-spans";
                 nameSpan.style.fontSize="18px";
                 nameSpan.style.marginLeft="32px";
                 nameSpan.style.lineHeight="80%";
                 nameSpan.textContent = data.name;
-
                 var categorySpan = document.createElement('span');
                 categorySpan.className = "swipe-element-spans";
-                categorySpan.style.marginLeft="200px"
+                categorySpan.style.marginLeft="175px";
                 categorySpan.textContent = capitalizeFirstLetter(data.category);
                
                 var expirySpan = document.createElement('span');
                 expirySpan.className="swipe-element-spans";
                 expirySpan.style.right="0";
-                expirySpan.style.marginRight = "32px";
+                expirySpan.style.marginRight = "22px";
                 expirySpan.textContent = "Exp: "+ minTwoDigits(soonestExpiryDate.getUTCMonth() + 1) + "/" + minTwoDigits(soonestExpiryDate.getUTCDate());
                 if(soonestExpiryDate<today){
                     expirySpan.textContent="Expired!";
@@ -449,38 +480,31 @@ function populateFridgeTable(){
                 else{
                     expirySpan.className="swipe-element-spans Exp_Green";
                 }
-
                 swipeableElement.appendChild(quantitySpan);
                 swipeableElement.appendChild(nameSpan);
                 swipeableElement.appendChild(categorySpan);
                 swipeableElement.appendChild(expirySpan);
-
                 swipeContainer.appendChild(swipeableElement);
-
                 var rightAction = document.createElement('div');
                 rightAction.className = "action right";
                 
                 var rightAction_i = document.createElement('i');
                 rightAction_i.className = "material-icons";
                 rightAction_i.textContent="remove_circle";
-
                 rightAction.appendChild(rightAction_i);
-
                 swipeContainer.appendChild(rightAction);
 
                 fridgeTableBody.appendChild(swipeContainer);
     
             });
            
-
           
         });
     });
-    */
+    
 }
 //handle swipes for deleting fridge items
 function handleSwipe() {
-    console.log("handling swipe");
     // define the minimum distance to trigger the action
     const minDistance = 80;
     document.querySelectorAll('.swipe-container').forEach(e => {
@@ -491,19 +515,26 @@ function handleSwipe() {
             console.log("left");
         } else if (swipeDistance > minDistance) {
         console.log("swiped right");
-        /*var itemName = e.childNodes[0].childNodes[1].textContent;
-        if(itemName!=""){
-            removeItem(itemName);
-            console.log(itemName);
+        try{
+            var itemName = e.childNodes[0].childNodes[1].textContent;
+            if(itemName!=""){
+                removeItem(itemName);
+                console.log(itemName);
+            }
+        }
+        catch(e){
+            console.log("ERROR GETTING ITEM DOC");
         }
        
+       
         //delete the item
-        */
+        
         } else {
             console.log("else");
         }
     });
-  }
+    
+}
 
   function removeItem(name){
     var foundItem = false;
@@ -528,25 +559,30 @@ function handleSwipe() {
                                 //item is Expired
                                 number_nonExpired_Quantities-=1;
                                 quantityItem.ref.delete();
+                                console.log("there is a expiry date that we can delete");
                             }
                     });
                     if(number_nonExpired_Quantities==0){
                         //we need to delete the item
                         item.ref.delete();
+                        console.log("we need to delete the item");
+                        populateFridgeTable();
 
+                    }
+                    else{
+                      //this item hasnt expired, do you want to delete it?
+                        //meal tracker should be used to take care of the case where you ate it or used in recipe
+                      alert("This item hasnt expired.");
                     }
                 });
                 
             }
             
         });
+      
     });
 
-    if(!foundItem){
-        console.log("// COULDNT FIND ITEM TO REMOVE //");
-    }
-   
-    populateFridgeTable();
+    
     
   }
 
@@ -560,23 +596,30 @@ function handleSwipe() {
 //------------------------------RECIPE PAGE-------------------------------------
 //-----------------------------------------------------------------------------------
 const myRecipes = document.getElementById("myrecipeItemsTable");
-const sharedRecipes = document.getElementById("sharedrecipeItemsTable");
-
+const sharedRecipesTable = document.getElementById("sharedrecipeItemsTable");
 
 const myRecipeBtn = document.getElementById("myRecipesBtn");
-myRecipesBtn.onclick = () => showMyRecipeTable();
+myRecipeBtn.onclick = () => showMyRecipeTable();
 function showMyRecipeTable(){
-    sharedRecipes.hidden=true;
+    sharedRecipesTable.hidden=true;
     myRecipes.hidden=false;
 }
 const sharedRecipeBtn = document.getElementById("sharedRecipesBtn");
-sharedRecipesBtn.onclick = () => showSharedRecipesBtn();
+sharedRecipeBtn.onclick = () => showSharedRecipesBtn();
 function showSharedRecipesBtn(){
-    sharedRecipes.hidden=false;
+    sharedRecipesTable.hidden=false;
     myRecipes.hidden=true;
     populateRecipes();
 }
-const sharedRecipesTable = document.getElementById("sharedrecipeItemsTable");
+
+const addRecipesBtn = document.getElementById('recipePageAddRecipeBtn');
+addRecipesBtn.onclick = () => showAddRecipePage();
+function showAddRecipePage(){
+    sharedRecipesTable.hidden=true;
+    myRecipes.hidden=true;
+    addRecipesBtn.innerHTML = "Confirm?";
+}
+
 function populateRecipes(){
     sharedRecipesTable.innerHTML='';
 
@@ -591,18 +634,74 @@ function populateRecipes(){
                 var name = newRow.insertCell(0);
                 name.innerHTML = data['recipe-name'];
 
-
+            var canCreateRecipe=true;
             var ingredients = item.ref.collection('ingredients').get();
             ingredients.then((snapshot2)=>{
                 snapshot2.forEach(ingredient=>{
                     //ingredient is the individual ingredients of the recipe
-                    console.log(ingredient.data().name);
+                    var IngredientData = ingredient.data();
+                    var foundThisIngredient = false;
+                    var fridgeItems = userProfile.ref.collection('fridge').get();
+                    fridgeItems.then((snapshot)=>{
+                        snapshot.forEach(item=>{
+                            let data = item.data();
+                            if(IngredientData.name==data.name){
+                                foundThisIngredient=true;
+                            }
+                        });
+                    });
+                    if(foundThisIngredient==false){
+                        console.log("we are missing an indredient to make this recipe");
+                        canCreateRecipe=false;
+                    }
+                    //console.log(ingredient.data().name);
                 });
+                if(canCreateRecipe==false){
+                    newRow.style.backgroundColor="#eda6a6";
+                    newRow.className="w3-animate-bottom Exp_Red";
+                }
+                else{
+                    //we can make this!
+                    newRow.style.backgroundColor="#bffabd";
+                    newRow.className="w3-animate-bottom Exp_Green";
+                }
             });
+
+           
             
         });
-        
+        document.querySelectorAll('#sharedrecipeItemsTable tr')
+        .forEach(e => e.addEventListener("click", inspectRecipe));
     });
+    recipeHighlight_IngredientSect.hidden=true;
+    recipeHighlight_InstructionSect.hidden=false;   
+}
+
+
+const recipeHighlight_IngredientSect = document.getElementById('recipeHighlight_IngredientSect');
+const recipeHighlight_InstructionSect = document.getElementById('recipeHighlight_InstructionSect');
+const recipeHighlightIngredientBtn = document.getElementById('recipeHighlightIngredientBtn');
+recipeHighlightIngredientBtn.onclick =() => {
+    recipeHighlight_IngredientSect.hidden=false;
+    recipeHighlight_InstructionSect.hidden=true;
+}
+const recipeHighlightInstructionBtn = document.getElementById('recipeHighlightInstructionBtn');
+recipeHighlightInstructionBtn.onclick =() => {
+    recipeHighlight_IngredientSect.hidden=true;
+    recipeHighlight_InstructionSect.hidden=false;
+}
+const recipesSection = document.getElementById('recipesSection');
+const recipesHighlight = document.getElementById('recipeHighlights');
+function inspectRecipe(){
+    var recipeName = this.cells[0].innerHTML; //get the name from the row we click on
+    recipesHighlight.hidden=false;
+    recipesSection.hidden=true;
+    console.log(recipeName);
+}
+const recipeHighlight_CloseBtn = document.getElementById('recipeHighlight_CloseBtn');
+recipeHighlight_CloseBtn.onclick=()=>{
+    recipesHighlight.hidden=true;
+    recipesSection.hidden=false;
 }
 
   
@@ -615,7 +714,13 @@ function populateRecipes(){
 
 //------------------------------CALENDER PAGE-------------------------------------
 //-----------------------------------------------------------------------------------
+const monthtitle = document.getElementById("monthName");
 const calendar = document.getElementById("calendarBody");
+function setMonthTitle(m){
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+        monthName.innerHTML = monthNames[m];
+}
 populateCalanderWithDays();
 function populateCalanderWithDays(){
     //JS CALENDARS COUNT SUN,MON,TUE,WED,THU,FRI,SAT
@@ -623,6 +728,8 @@ function populateCalanderWithDays(){
     var date = new Date(), y = date.getFullYear(), m = date.getMonth();
     var firstDay = new Date(y, m, 1);
     var lastDay = new Date(y,m+1, 0);
+
+    setMonthTitle(m);
 
     var currentRow = calendar.insertRow(0);
     var dayOfWeek = firstDay.getDay();
@@ -667,16 +774,26 @@ function populateCalanderWithDays(){
 }
 const dayHeader = document.getElementById("dayHeader");
 const dayHighlight =  document.getElementById("dayHighlightPopup");
+var previousClickedDayInt;
 function clickHandler() {
     // Here, `this` refers to the element the event was hooked on
     var date = new Date(), y = date.getFullYear(), m = date.getMonth();
     var firstDay = new Date(y, m, 1);
-    var clickedDay = firstDay.addDays(parseInt(this.innerHTML)-1);
     if(this.innerHTML==''){
         return;
     }
+
+    var clickedDay = firstDay.addDays(parseInt(this.innerHTML)-1);
+    var clickedDayInt = this.innerHTML;
+    console.log("clicked on day " + clickedDayInt + " previous click was " + previousClickedDayInt);
+    if(clickedDayInt==previousClickedDayInt){
+        dayHighlightPopup.hidden=true;
+        previousClickedDayInt=-1;
+        return;
+    }
+    previousClickedDayInt = clickedDayInt;
     
-    dayHeader.innerHTML = dayOfWeekAsInteger(clickedDay.getDay()) + " " + (clickedDay.getUTCDate());
+    dayHeader.innerHTML = dayOfWeekAsInteger(clickedDay.getDay()+1) + " " + (clickedDay.getUTCDate());
     dayHighlightPopup.hidden=false;
 }
 document.querySelectorAll('#calendarBody td')
@@ -693,3 +810,4 @@ function editScheduleButton(){
     calendarWrapper.hidden=!sched;
     dayHighlightPopup.hidden=true;
 }
+

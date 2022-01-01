@@ -1,3 +1,4 @@
+[hidden] { display: none !important; }
 
 body {
 	font-family: 'Fjalla One', bold;
@@ -190,12 +191,13 @@ input{text-align:right; font-size:100%;}
     overflow: auto;
     overflow-x: scroll;
     scroll-snap-type: x mandatory;
-
+    
     width:100%; 
-    background-color:#eda6a6; 
+    background-color:#e5e3f1; 
     border: 3px solid #a29cf4; 
     height:44px; 
     margin-bottom: 6px;
+    
   }
   /* scrollbar should be hidden */
   .swipe-container::-webkit-scrollbar {
@@ -208,8 +210,10 @@ input{text-align:right; font-size:100%;}
     padding: 16px;
     background-color: none;
 
+    
     padding-bottom: 22px; 
     z-index: 2;
+    
   }
   .swipe-element-spans{
     pointer-events: none; 
@@ -234,10 +238,9 @@ input{text-align:right; font-size:100%;}
   }
   /* action background colors */
   .left {
-    /*background-color: orchid;*/
+    background-color: orchid;
   }
   .right {
     justify-content: flex-end;
     background-color: red;
   }
-  
