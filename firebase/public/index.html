@@ -9,7 +9,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.4.3/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.4.3/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.4.3/firebase-firestore.js"></script>
-
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script> 
 
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&display=swap" rel="stylesheet">
@@ -47,7 +46,6 @@
       <img class="icon" src="img/outline_kitchen_black_24dp.png">
       <h4 class=" h4 w3-center">Fridge Track</h4>
       <button id="signInBtn" class="inputbutton w3-center"> Sign in with Google</button>
-      <h6 class=" h6 w3-center">If you are unable to sign in, please contact the developer.</h6>
     </section>
 
     <section id="welcomeSection" class="welcomeFade w3-center" style="z-index:1">
@@ -56,7 +54,7 @@
     </section>
 
 
-    <section id="topBar" style="display:none; z-index: 1">
+    <section id="topBar">
       <button id="grocery" class= "navBtn material-icons">local_grocery_store</button>
       <button id="fridge" class= "navBtn material-icons">kitchen</button>
       <button id="recipes" class= "navBtn material-icons">restaurant_menu</button>
@@ -65,25 +63,25 @@
     </section>
 
     
-    <section id="contentSection" style="display: none;">
-      <section id="groceryPage" hidden=true class="w3-animate-left">
-        <table class="items" style="width:100%;" id="groceryItemsTable">
+    <section id="contentSection">
+      <!--***************************************-->
+      <!--            GROCERY PAGE               -->
+      <section id="groceryPage" hidden=true class="w3-animate-left" style="height:100%;">
+        <table id="groceryItemsTable" class="items" style="width:100%;" >
           <!--This is dynamically added to-->
         </table>
         
-
-        <span id="groceryPageContent" class="w3-center" style="width:100%;">
+        <span id="groceryPageContent" class="w3-center" style="width:100%; height:100%; text-align:center;">
           <button id="groceryPageAddManualBtn" class="inputbutton w3-center" style="margin-top:25%; margin-left:27%;">Manual input</button> <br>
           
-          <div id="groceryPagePopup" hidden=true style="background-color: grey; padding:12px; text-align: justify; width:100%; margin-top:25%; margin-bottom:20%;">
+          <div id="groceryPagePopup" hidden=true>
             <h6>This item already exists in the general pool. Would you like to replace the values?</h6>
             <button id="groceryPopUpReplaceBtn" style="padding:6px 24px; font-size:14px;" class="inputbutton w3-center">Replace</button>
             <button id="groceryPopupCancelBtn" style="padding:6px 24px; font-size:14px;" class="inputbutton w3-center">Cancel</button><br>
           </div>
             
-          <div id="groceryPageManualForm" hidden=true style="background-color: grey; padding:12px; text-align: justify; width:100%; margin-top:25%; margin-bottom:20%;">
-            
-            <label>Food Name<i> (Singular!)</i></label>
+          <div id="groceryPageManualForm" hidden=true> 
+            <label>Food Name<i style="color:black;"> (Singular!)</i></label>
             <input type="text" name="food name" style="width:120px;"><br>
 
             <label>Where its stored</label>
@@ -120,14 +118,10 @@
           </div>
 
           <button id="groceryPageAddRepeatBtn" class="inputbutton w3-center" style="margin-top:8%; margin-bottom:20%; margin-left:25%;">Add repeat item</button>
-          <div id="groceryPageRepeatForm" hidden=true style="background-color: grey; padding:12px; text-align: justify; width:100%; margin-top:15%; margin-bottom:20%;">
-            <div style="background-color: grey; padding:12px; text-align: justify; width:100%; margin-top:15%; margin-bottom:5%;">
-              <button id="repeatForm_Cancel" class="inputbutton w3-center" style="padding:6px 28px;">Cancel</button>
-            </div>
+          <div id="groceryPageRepeatForm" hidden=true>
+            <button id="repeatForm_Cancel" class="inputbutton w3-center" style="padding:6px 28px;">Cancel</button>
             <table class="items" id="repeatItemsTable">
-
             </table>
-            
           </div>
         
         </span>
@@ -135,11 +129,13 @@
       </section>
   
       
-       <section id="fridgePage" style="margin-top:4px;" class="w3-animate-right">
+       <section id="fridgePage" class="w3-animate-right" style="margin-top:4px; height:100%;">
+          <!--Sorting options-->
           <div style="height:60px; background-color: #e5e3f1; border: 3px solid #a29cf4;">
+            <h6>sorting options</h6>
           </div>
           
-          <table class="items" style="width:100%; margin-top:8px;" id="fridgeItemsTable">
+          <table id="fridgeItemsTable" class="items" style="width:100%; margin-top:8px;">
             <!--Dynamically added to-->
             <tbody id="fridgeTableBody">
               
@@ -148,11 +144,11 @@
           </table>
        </section>
   
-      <section id="recipesPage" hidden=true class="w3-animate-right"> 
+      <section id="recipesPage" hidden class="w3-animate-right"> 
         <div id="recipesSection">
           <button id="myRecipesBtn" class="inputbutton">My Recipes</button>
           <button id="sharedRecipesBtn" style="position:absolute; right:0;" class="inputbutton">Shared Recipes</button>
-          <table hidden=true class="items" style="width:100%; margin-top:8px;" id="myrecipeItemsTable">
+          <table id="myrecipeItemsTable" class="items" hidden=true style="width:100%; margin-top:8px;">
             <!--Dynamically added to-->
             <tbody id="myrecipeItemsTable">
               <tr style="background-color:#a6edb2;">
@@ -165,246 +161,106 @@
               </tr>
             </tbody>
           </table>
-          <table  class="items" style="width:100%; margin-top:8px;">
+
+          <table class="items" style="width:100%; margin-top:8px;">
             <!--Dynamically added to-->
             <tbody id="sharedrecipeItemsTable">
             </tbody>
           </table>
-          <div id="addRecipeSection">
+
+          <div id="addRecipeSection" style="margin-bottom: 4%; margin-top:2%;" hidden>
+            <div class="w3-left">
+              <!--Button to open up add recipe section and same button to confirm add recipe-->
+              <button style="margin-top:9%;" class="inputbutton" id="closeAddRecipeSection">Close</button>
+            </div>
+            <!--Recipe name text field-->
+            <input type="text" placeholder="enter recipe name" name="newrecipename" style="height: 30px; width:96%; margin-bottom:6px; text-align:left; font-size:18px; margin-left:2%;"><br>
             
+            <div>
+              <!--Swap between editing ingred list and instruc list-->
+              <button id="editIngredientsBtn" hidden=true class="inputbutton w3-left">Edit Ingredients</button>
+              <button id="editInstructionsBtn" class="inputbutton w3-right">Edit Instructions</button>
+            </div>
+            
+            <!--Ingredients list-->
+            <div id="ingredientsList">
+              <table class="items" style="width:100%;">
+                
+              </table>
+              <div id="ingredientForm" style="width:100%; height:44px; padding:4px; background-color: #e5e3f1; border: 3px solid #a29cf4; margin-bottom:6px;" hidden>
+                <input type="text" placeholder="amount" name="newIngredient_amt" style="text-align:left; font-size:18px; width:20%;">
+                <input type="text" placeholder="measurement name" name="newIngredient_measurement" style="text-align:left; font-size:18px; width:30%;">
+                <input type="text" placeholder="ingredient name" name="newIngredient_name" style="text-align:left; font-size:18px; width:47%;">
+              </div>
+            </div>
+           
+
+            <!--Instructions list-->
+            <div id="instructionsList" hidden>
+              <table class="items" style="width:100%; margin-top:12px;">
+                
+              </table>
+              <div id="instructionForm" style="width:100%; height:44px; padding:4px; background-color: #e5e3f1; border: 3px solid #a29cf4; margin-bottom:6px;" hidden>
+                <input type="text" placeholder="enter instruction text" name="newinstruction" style="text-align:left; font-size:18px; width:100%;">
+              </div>
+            </div>
+
+            
+
+            <div class="w3-center" style="margin-bottom: 1%;">
+               <!--Add buttons-->
+              <button id="addIngredientBtn" class="inputbutton" style="width:100%;">Add Ingredient</button>
+              <button id="addInstructionBtn" hidden=true class="inputbutton" style="width:100%;">Add Instruction</button>
+            </div>
+           
           </div>
 
-          <button style="margin-left:27%;" class="inputbutton" id="recipePageAddRecipeBtn">Add Recipe</button>
+        </div>
+        <div class="w3-center">
+          <!--Button to open up add recipe section and same button to confirm add recipe-->
+          <button style="margin-top:9%;" class="inputbutton" id="recipePageAddRecipeBtn">Add Recipe</button>
         </div>
        
 
-        <section style="background-color: #e5e3f1;
-      border: 3px solid #a29cf4;
-      width:100%;
-      height:100%;
-      vertical-align: top;   
-      margin-top: 6px;" hidden=false id="recipeHighlights">
-       
+        <section id="recipeHighlights" hidden>
+          
           <div style="text-align: center;">
-            <strong>
-              Buffalo Cauliflower Bites Test
+            <strong id="recipeHighlightName">
+              
             </strong>
           </div>
+          <!--View ingredients and instructions buttons-->
           <div style="padding-top: 5%; padding-bottom:15%;">
               <button style="position:absolute; left:0; margin-left:7%;" id="recipeHighlightIngredientBtn" class="inputbutton">Ingredients</button>
               
               <button style="position:absolute; right:0; margin-right:7%;" id="recipeHighlightInstructionBtn" class="inputbutton">Instructions</button>
           </div>
 
-          <!--ingredients-->
+          <!--ingredients list-->
           <div id="recipeHighlight_IngredientSect">
-            <table style="width:100%; height:100%;" class="items">
-              <tr>
-                <td>
-                  Breadcrumbs
-                </td>
-                <td>
-                  2
-                </td>
-                <td>
-                  Cups
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Eggs
-                </td>
-                <td>
-                  3
-                </td>
-                <td style="margin-right:5%">
-                  whole
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  Cauliflower
-                </td>
-                <td>
-                  1
-                </td>
-                <td style="margin-right:5%">
-                  head
-                </td>
-              </tr> 
-              <tr>
-                <td>
-                  Cauliflower
-                </td>
-                <td>
-                  1
-                </td>
-                <td style="margin-right:5%">
-                  head
-                </td>
-              </tr> 
-              <tr>
-                <td>
-                  Cauliflower
-                </td>
-                <td>
-                  1
-                </td>
-                <td style="margin-right:5%">
-                  head
-                </td>
-              </tr> 
-              <tr>
-                <td>
-                  Cauliflower
-                </td>
-                <td>
-                  1
-                </td>
-                <td style="margin-right:5%">
-                  head
-                </td>
-              </tr> 
-              <tr>
-                <td>
-                  Cauliflower
-                </td>
-                <td>
-                  1
-                </td>
-                <td style="margin-right:5%">
-                  head
-                </td>
-              </tr> 
-              <tr>
-                <td>
-                  Cauliflower
-                </td>
-                <td>
-                  1
-                </td>
-                <td style="margin-right:5%">
-                  head
-                </td>
-              </tr> 
-              <tr>
-                <td>
-                  Cauliflower
-                </td>
-                <td>
-                  1
-                </td>
-                <td style="margin-right:5%">
-                  head
-                </td>
-              </tr> 
-              <tr>
-                <td>
-                  Cauliflower
-                </td>
-                <td>
-                  1
-                </td>
-                <td style="margin-right:5%">
-                  head
-                </td>
-              </tr> 
-              <tr>
-                <td>
-                  Cauliflower
-                </td>
-                <td>
-                  1
-                </td>
-                <td style="margin-right:5%">
-                  head
-                </td>
-              </tr> 
-              <tr>
-                <td>
-                  Cauliflower
-                </td>
-                <td>
-                  1
-                </td>
-                <td style="margin-right:5%">
-                  head
-                </td>
-              </tr> 
-              <tr>
-                <td>
-                  Cauliflower
-                </td>
-                <td>
-                  1
-                </td>
-                <td style="margin-right:5%">
-                  head
-                </td>
-              </tr> 
-              <tr>
-                <td>
-                  Cauliflower
-                </td>
-                <td>
-                  1
-                </td>
-                <td style="margin-right:5%">
-                  head
-                </td>
-              </tr> 
-              <tr>
-                <td>
-                  Cauliflower
-                </td>
-                <td>
-                  1
-                </td>
-                <td style="margin-right:5%">
-                  head
-                </td>
-              </tr> 
+            <table class="items" style="width:100%; height:100%;">
+             
             </table>
           </div>
 
           <!--instructions section-->
           <div hidden id="recipeHighlight_InstructionSect">
-            <table class="items">
-              <tr>
-                <td style="width:10%">
-                  1
-                </td>
-                <td style="width:90%;">
-                  Preheat oven to 400F
-                </td>
-                </tr>
-                <tr style="height:64px;">
-                  <td style="width:10%">
-                    2
-                  </td>
-                  <td style="width:90%;">
-                    Coat cauliflower and place on baking sheet
-                  </td>
-                </tr>
-               <tr>
-                <td style="width:10%">
-                  3
-                </td>
-                <td style="width:90%;">
-                  Toss cauliflower in buffalo sauce
-                </td>
-               </tr>
-                
+            <table class="items" style="width:100%; height:100%;">
+              
             </table>
           </div>
 
           <button id="recipeHighlight_CloseBtn" class="inputbutton">Close</button>
           
       </section>
-  
+
       </section>
+  
       
+      
+
       <section id="trackerPage" hidden=true class="w3-animate-right" style="width:100%;">
+        <!--DAY POPUP-->
         <div id="dayHighlightPopup" class="w3-animate-top" hidden=true style="margin-bottom: 2%;">
           <table class="items" style="background-color: grey;">
             <tr>
@@ -429,6 +285,7 @@
             </tbody>
           </table>
         </div>
+        <!--CALENDAR-->
         <div id="calendarSection">
           <table class="calendar" style="width:100%;">
             <div style="background-color: #e5e3f1; border: 3px solid #a29cf4; border-bottom: 0; padding-bottom:10px;">
@@ -442,71 +299,35 @@
                 <td>Sat</td>
                 <td>Sun</td>
               </tr>
-            </div>
-            
+            </div> 
             <tbody id="calendarBody">
-              
-
             </tbody>
           </table>
-          
         </div>
+
+        <!--EDIT SCHEDULES BUTTON-->
         <button id="editScheduleBtn" style="margin-left:27%; margin-top:5%;" class="inputbutton">Edit Schedules</button>
         <div class="w3-animate-bottom" id="schedulePage" hidden=true>
-          <h6 style="text-align: center; font-size:20px; background-color: #e5e3f1; border: 3px solid #a29cf4;">Current Meal Plan: Banana Plan</h6>
           <table class="items" style="width:100%;">
+            <button class="inputbutton">Active Plan: Bananna Plan</button>
             <tbody>
-              <tr>
-                <th>Monday</th>
-                <td>
-              </tr>
-              <tr>
-                <th>Tuesday</th>
-              </tr>
-              <tr>
-                <th>Wednesday</th>
-              </tr>
-              <tr>
-                <th>Thursday</th>
-              </tr>
-              <tr>
-                <th>Friday</th>
-              </tr>
-              <tr>
-                <th>Saturday</th>
-              </tr>
-              <tr>
-                <th>Sunday</th>
-              </tr>
+              <button class="inputbutton">Select Plan: x Plan</button>
+              <button class="inputbutton">Select Plan: y Plan</button>
             </tbody>
+            
           </table>
-          <table class="items" style="width:100%;">
-            <tbody>
-              <tr>
-                <td>Breakfast</td>
-              </tr>
-              <tr>
-                <td>Lunch</td>
-              </tr>
-              <tr>
-                <td>Dinner</td>
-              </tr>
-              <tr>
-                <td>Snack</td>
-              </tr>
-            </tbody>
-          </table>
+          
         </div>
       </section>
   
       <section id="expensesPage" hidden=true class="w3-animate-right">
-        <h6>Expenses Page</h6>
         <div style="height:60px; background-color: #e5e3f1; border: 3px solid #a29cf4;">
-        
+          <span>Week</span>
+          <span>Month</span>
+          <span>6Months</span>
+          <span>All</span>
         </div>
-        <h6>Graphs</h6>
-        <h6>Average Spending on <b>Breakfast</b> is: $8.65</h6>
-
+        
       </section>
       
     </section>
