@@ -10,6 +10,15 @@
         border:none;
         border-radius: 3%;   
     }
+    .grayout{
+        font-family: 'Fjalla One', bold;
+        background-color: #858585;
+        color: whitesmoke;
+        padding: 11px 32px;
+        font-size: 18px;
+        border:none;
+        border-radius: 3%;   
+    }
     .inputbutton:hover{
         background-color: #005e94;
     }
@@ -199,6 +208,13 @@
     }
     table.calendar tbody td:hover{
         background-color: #c0b7f8;
+    }
+    /*day highlight*/
+    .dayHighlightMealComplete{
+        background-color: #a6edb2;
+    }
+    .dayHighlightMealIncomplete{
+        background-color: #c5c5c5;
     }
 /*END OF MAIN FRIDGE PAGE SECTIONS*/
 

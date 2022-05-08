@@ -6,9 +6,9 @@
             //translates day of week from calendar into day string
         function dayOfWeekAsInteger(day) {
             
-            var days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday", "Saturday"];
-            console.log("arg: " + day + " result: " + days[day-1]);
-            return days[day-1];
+            var days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+            console.log("arg: " + day + " result: " + days[day]);
+            return days[day];
         }
             //get date + int as a date
         Date.prototype.addDays = function(days) {
@@ -21,8 +21,8 @@
             return (n < 10 ? '0' : '') + n;
         }
             //designed for fridge
-            //handle swipes for deleting fridge items (TODO: if we use swipe in multiple places this will not work)
-        function handleSwipe() {
+            //handle swipes for deleting fridge items 
+        function handleSwipeFridge() {
             const minDistance = 80; // the minimum distance to trigger the action
             //this querys all swipe containers looking at each element for a swipe interaction (TODO: make more efficent)
             document.querySelectorAll('.swipe-container').forEach(e => {
@@ -34,6 +34,7 @@
                     console.log("swiped right");
                     //Try to get item name from swipe element container
                     try{
+                        //execute logic
                         var itemName = e.childNodes[0].childNodes[1].textContent;
                         if(itemName!=""){
                             removeItem(itemName);
@@ -51,25 +52,49 @@
             });
             
         }
+           //designed for recipe edit
+            //handle swipes for deleting ingredients in add recipe form 
+        function handleSwipeRecipeEdit() {
+            const minDistance = 80; // the minimum distance to trigger the action
+            //this querys all swipe containers looking at each element for a swipe interaction (TODO: make more efficent)
+            document.querySelectorAll('.swipe-container').forEach(e => {
+                const swipeDistance = e.scrollLeft; //get swipe distance (no right action so dont need width)
+                if (swipeDistance < minDistance * -1) {
+                    console.log("left");
+                } 
+                else if (swipeDistance > minDistance) {
+                    console.log("swiped right");
+                    //Try to get item name from swipe element container
+                    try{
+                        //execute logic
+                        console.log(e);
+                        e.remove();
+                    }
+                    catch(e){
+                        console.log("ERROR GETTING ITEM DOC");
+                    }
+                
+                    } 
+                else {
+                    console.log("not enough distance on swipe");
+                }
+            });
+            
+        }
             //designed for calendar
             //TODO: generalize this and allow multiple use cases
         function clickHandler() {
             // Here, `this` refers to the element the event was hooked on
             var date = new Date(), y = date.getFullYear(), m = date.getMonth();
-            var firstDay = new Date(y, m, 1);
             console.log("CLICKED: " + this.innerHTML);
             if(this.innerHTML==''){ 
                 return; //didnt click on a day, return
             }
     
             //get a date object from the day number
-            var clickedDay = firstDay.addDays(parseInt(this.innerHTML)-1);
-            //the plain day number
             var clickedDayInt = this.innerHTML;
-    
-            /**DEBUG**/
-            console.log("clicked on day " + clickedDayInt + " previous click was " + previousClickedDayInt);
-            /**DEBUG**/
+            var clickedDay = new Date(y, m, clickedDayInt);
+
     
             //Clicked the same day twice so close day highlight
             if(clickedDayInt==previousClickedDayInt){
@@ -78,10 +103,12 @@
                 return;
             }
             previousClickedDayInt = clickedDayInt;
-            
+
             //display day header and show highlight popup
-            dayHeader.innerHTML = dayOfWeekAsInteger(clickedDay.getDay()+1) + " " + (clickedDay.getUTCDate());
+            dayHeader.innerHTML = dayOfWeekAsInteger(clickedDay.getDay()) + " " + (clickedDay.getUTCDate());
             dayHighlightPopup.hidden=false;
+
+            loadDayHighlight(clickedDay.getDay());
         }
     
     
@@ -176,8 +203,12 @@
         window.scrollTo(0,0);
     
         if(sharedRecipesUpdatePending){
-            populateSharedRecipes();
+            populateRecipesTable("shared");
             sharedRecipesUpdatePending=false;
+        }
+        if(myrecipesUpdatePending){
+            populateRecipesTable("personal");
+            myrecipesUpdatePending=false;
         }
     
         groceryPage.className="w3-animate-left";
@@ -571,7 +602,7 @@
                         //create the table row as a swipe element 
                         var swipeContainer = document.createElement('div');
                         swipeContainer.className = "swipe-container w3-animate-bottom";
-                        swipeContainer.ontouchend = handleSwipe;
+                        swipeContainer.ontouchend = handleSwipeFridge;
     
                         var swipeableElement = document.createElement('div');
                         swipeableElement.className = "swipe-element";
@@ -682,6 +713,7 @@
                             if(number_nonExpired_Quantities==0){
                                 //all the quantities have expired we need to delete the entire item
                                 item.ref.delete();      //TODO: check this is actually removing the doc on firebase (may need to delete collections first)
+                                //need to delete Price History collection first
                                 populateFridgeTable();  //update VISUAL table
     
                             }
@@ -704,7 +736,7 @@
                                 if(totalQuan==numQuanDeleted){
                                     //non left
                                     item.ref.delete();      //TODO: check this is actually removing the doc on firebase (may need to delete collections first)
-                                    
+                                    //need to delete collection price history first
                                 }
                                 populateFridgeTable();  //update VISUAL table
                             }
@@ -742,10 +774,10 @@
     //-------------------------------------------------------------------------
         //variable for caching updates
     var sharedRecipesUpdatePending=true;
+    var myrecipesUpdatePending=true;
         //variable for the dual functionality of add recipe and confirm recipe button
     var confirmRecipeArmed=false;
 
-    var addingNewInstruction=false;
     var addingNewIngredient=false;
     
         //my recipes button (shows the user recipes table)
@@ -759,81 +791,159 @@
     
         //GENERAL FUNCTIONALITY
             //populate shared recipes table
-        function populateSharedRecipes(){
-            sharedRecipesTable.innerHTML='';
-        
-            var recipes = firebase.firestore().collection('recipes').get();
+        function populateRecipesTable(type){ //param: shared or personal
+            
+            var recipes=null;
+            var table=null;
+            if(type=="shared"){
+                recipes = firebase.firestore().collection('recipes').get();
+                table = sharedRecipesTable;
+            }
+            else if(type=="personal"){
+                recipes = userProfile.ref.collection('myrecipes').get();
+                table = myRecipes;
+            }
+            table.innerHTML = '';
+            
             recipes.then((snapshot)=>{
                 snapshot.forEach(item=>{
                     let data = item.data();
-                    console.log(data);
                     let recipeName = (item.id).replaceAll("-", " ");
         
-                    var newRow = sharedRecipesTable.insertRow();
+                    var newRow = table.insertRow();
                         newRow.className = "w3-animate-bottom";
                         var name = newRow.insertCell(0);
                         name.innerHTML = recipeName
         
                     var canCreateRecipe=true;
                     //look through the ingredients
-                    var ingredients = item.ref.collection('ingredients').get();
-                    ingredients.then((snapshot2)=>{
-                        snapshot2.forEach(ingredient=>{
-                            //ingredient is the individual ingredients of the recipe
-                            var IngredientData = ingredient.data();
-                            var foundThisIngredient = false;
-                            var fridgeItems = userProfile.ref.collection('fridge').get();
-                            fridgeItems.then((snapshot)=>{
-                                snapshot.forEach(item=>{
-                                    let data = item.data();
-                                    if(IngredientData.name==data.name){
-                                        foundThisIngredient=true;
-                                    }
-                                });
+                    var ingredients = data.ingredients;
+                    ingredients.forEach(ingredient=>{
+                        var foundThisIngredient = false;
+                        var fridgeItems = userProfile.ref.collection('fridge').get();
+                        fridgeItems.then((snapshot)=>{
+                            snapshot.forEach(item=>{
+                                if(item.data().name==ingredient){
+                                    foundThisIngredient=true;
+                                }
                             });
                             if(foundThisIngredient==false){
-                                console.log("we are missing an indredient to make this recipe");
+                                console.log("couldnt find ingredient: " + ingredient);
                                 canCreateRecipe=false;
+                              
                             }
-                            //console.log(ingredient.data().name);
                         });
-                        if(canCreateRecipe==false){
-                            newRow.style.backgroundColor="#eda6a6";
-                            newRow.className="w3-animate-bottom Exp_Red";
-                        }
-                        else{
-                            //we can make this!
-                            newRow.style.backgroundColor="#bffabd";
-                            newRow.className="w3-animate-bottom Exp_Green";
-                        }
+                      
+                       
+                            
                     });
+                    if(canCreateRecipe==false){
+                        newRow.style.backgroundColor="#eda6a6";
+                        newRow.className="w3-animate-bottom Exp_Red";
+                    }
+                    else{
+                        //we can make this!
+                        newRow.style.backgroundColor="#bffabd";
+                        newRow.className="w3-animate-bottom Exp_Green";
+                    }
         
                    
                     
                 });
-                document.querySelectorAll('#sharedrecipeItemsTable tr')
-                .forEach(e => e.addEventListener("click", inspectRecipe));
+                if(type=="shared"){
+                    document.querySelectorAll('#sharedrecipeItemsTable tr')
+                    .forEach(e => e.addEventListener("click", inspectRecipe_Shared));
+                }
+                else if(type=="personal"){
+                    document.querySelectorAll('#myrecipeItemsTable tr')
+                    .forEach(e => e.addEventListener("click", inspectRecipe_Personal));
+                }
+               
             });
-            recipeHighlight_IngredientSect.hidden=true;
-            recipeHighlight_InstructionSect.hidden=false;   
+
         }
             //get input on recipes table rows to show recipe details to show recipe highlight page
-        function inspectRecipe(){
+        function inspectRecipe_Shared(){
             var recipeName = this.cells[0].innerHTML; //get the name from the row we click on
             recipesHighlight.hidden=false;
             recipesSection.hidden=true;
             addRecipesBtn.hidden=true;
 
             recipeHighlight_NameText.innerHTML = recipeName;
+            recipeHighlight_IngredientSect_Table.innerHTML="";
+
+            recipeHighlight_AddBtn.hidden=false;
+
             //search recipe
             let docName = recipeName.replaceAll(" ", "-");
-            var recipe = firebase.firestore().collection('recipes').doc(docName).collection('ingredients').get().then((snapshot)=>{
-                console.log(snapshot.data());
-            });
+            firebase.firestore().collection('recipes').doc(docName).get().then((snapshot)=>{
+                snapshot.data().ingredients.forEach(item=>{
+                    var newRow = recipeHighlight_IngredientSect_Table.insertRow();
+                    newRow.className="w3-animate-bottom";
+    
+                    var newtd = newRow.insertCell();
+                    newtd.innerHTML = item;
 
-            /**DEBUG**/
-            console.log(recipeName);
-             /**DEBUG**/
+                    var foundIngredInFridge = false;
+                    userProfile.ref.collection('fridge').get().then((snapshot)=>{
+                        snapshot.forEach(fridgeItem=>{
+                            if(fridgeItem.data().name==item){
+                                 newRow.className += " Exp_Green";
+                                 newRow.style.backgroundColor="#bffabd";
+                                 foundIngredInFridge = true;
+                            }
+                            
+                        });
+                    });
+                    if(!foundIngredInFridge){
+                        newRow.className+=" Exp_Red";
+                        newRow.style.backgroundColor="#eda6a6";
+                    }
+                       
+                });
+                    
+            });
+        }
+        function inspectRecipe_Personal(){
+            var recipeName = this.cells[0].innerHTML; //get the name from the row we click on
+            recipesHighlight.hidden=false;
+            recipesSection.hidden=true;
+            addRecipesBtn.hidden=true;
+
+            recipeHighlight_NameText.innerHTML = recipeName;
+            recipeHighlight_IngredientSect_Table.innerHTML="";
+
+            recipeHighlight_AddBtn.hidden=true;
+
+            //search recipe
+            let docName = recipeName.replaceAll(" ", "-");
+            userProfile.ref.collection('myrecipes').doc(docName).get().then((snapshot)=>{
+                snapshot.data().ingredients.forEach(item=>{
+                    var newRow = recipeHighlight_IngredientSect_Table.insertRow();
+                    newRow.className="w3-animate-bottom";
+    
+                    var newtd = newRow.insertCell();
+                    newtd.innerHTML = item;
+
+                    var foundIngredInFridge = false;
+                    userProfile.ref.collection('fridge').get().then((snapshot)=>{
+                        snapshot.forEach(fridgeItem=>{
+                            if(fridgeItem.data().name==item){
+                                 newRow.className += " Exp_Green";
+                                 newRow.style.backgroundColor="#bffabd";
+                                 foundIngredInFridge = true;
+                            }
+                            
+                        });
+                    });
+                    if(!foundIngredInFridge){
+                        newRow.className+=" Exp_Red";
+                        newRow.style.backgroundColor="#eda6a6";
+                    }
+                       
+                });
+                    
+            });
         }
     
     
@@ -850,6 +960,7 @@
         function showMyRecipeTable(){
             sharedRecipesTable.hidden=true;
             myRecipes.hidden=false;
+            sharedRecipesTableOpen=false;
         }
     
     
@@ -866,43 +977,50 @@
         function showSharedRecipesBtn(){
             sharedRecipesTable.hidden=false;
             myRecipes.hidden=true;
+            sharedRecipesTableOpen=true;
         }
+        var sharedRecipesTableOpen=true;
     
     
         //******ADD RECIPE FORM*******
         //ADD RECIPE FORM INPUT FIELDS
-        const editInstructionsBtn = document.getElementById("editInstructionsBtn");
-        const editIngredientsBtn = document.getElementById("editIngredientsBtn");
         const addIngredientBtn = document.getElementById("addIngredientBtn");
-        const addInstructionBtn = document.getElementById("addInstructionBtn");
         const newrecipename = document.getElementById("newrecipename");
         const closeAddRecipeBtn = document.getElementById("closeAddRecipeSection");
+        
          
             //add ingredient input fields
-        const newingredientamount = document.getElementsByName("newIngredient_amt")[0];
-        const newingredientmeasurement = document.getElementsByName("newIngredient_measurement")[0];
         const newingredientname = document.getElementsByName("newIngredient_name")[0];
          
-            //add instruction input fields
-        const newinstruction_text = document.getElementsByName("newinstruction")[0];
-       
        
         //ADD RECIPE FORM CONTAINERS
         const addReicpeSection = document.getElementById("addRecipeSection");
         const ingredientListContainer = document.getElementById("ingredientsList");
         const ingredientForm = document.getElementById("ingredientForm");
-        const instructionsListContainer = document.getElementById("instructionsList");
-        const instructionForm = document.getElementById("instructionForm");
 
         //ADD RECIPE FORM FUNCTIONALITY
             //show the add recipe form
         addRecipesBtn.onclick = () => addRecipeConfirmRecipe();
         function addRecipeConfirmRecipe(){
             if(confirmRecipeArmed){
-                //CHECK IF ALL VARS ARE FILLED OUT THEN UPLOAD TO FIREBASE (BACKEND) AND UPDATE TABLE (VISUAl)
-                //TODO: ^
                 var recipeName = newrecipename.value;
-                var fridgeItemDoc = userProfile.ref.collection('fridge').doc(capitalizeFirstLetter(recipeName));
+                var newRecipeDoc = userProfile.ref.collection('myrecipes').doc(capitalizeFirstLetter(recipeName).replaceAll(" ", "-"));
+                var ingredientTable=ingredientListContainer.getElementsByClassName("items")[0];
+                //read ingredients from input table
+                console.log("recipe confirmed");
+
+                var rows = ingredientTable.getElementsByClassName("swipe-container");
+                var ingredientsArr = [];
+                for(var i=0; i<rows.length; i+=1){
+                    console.log(rows[i].getElementsByClassName('swipe-element')[0].getElementsByClassName('swipe-element-spans')[0].innerHTML);
+                    ingredientsArr.push(rows[i].getElementsByClassName('swipe-element')[0].getElementsByClassName('swipe-element-spans')[0].innerHTML);
+                }
+                
+                
+                newRecipeDoc.set({
+                    'recipe-name': recipeName,
+                    ingredients: ingredientsArr
+                });
                 
                 sharedRecipesTable.hidden=true;
                 myRecipes.hidden=false;
@@ -928,66 +1046,30 @@
             }
             
         }
-        editInstructionsBtn.onclick = () => {
-            instructionsListContainer.hidden=false;
-            ingredientListContainer.hidden=true;
-            editIngredientsBtn.hidden=false;
-            editInstructionsBtn.hidden=true;
-            addInstructionBtn.hidden=false; //
-            addIngredientBtn.hidden=true; //
-        }
-        editIngredientsBtn.onclick=()=>{
-            instructionsListContainer.hidden=true;
-            ingredientListContainer.hidden=false;
-            editIngredientsBtn.hidden=true;
-            editInstructionsBtn.hidden=false;
-            addInstructionBtn.hidden=true;
-            addIngredientBtn.hidden=false;
-        }
         addIngredientBtn.onclick = () => addIngredientConfirmIngredient();
         function addIngredientConfirmIngredient(){
             if(addingNewIngredient){
                 //confirm ingredient add
-                var amount = newingredientamount.value;
-                var measurement = newingredientmeasurement.value;
                 var name = newingredientname.value;
-                if(amount=="" || measurement=="" || name==""){
+                if(name==""){
                     console.log("MISSING AN INPUT");
                     return;
                 }
                 //get the table
-                const ingredientTable=ingredientListContainer.getElementsByClassName("items")[0];
+                var ingredientTable=ingredientListContainer.getElementsByClassName("items")[0];
                 var swipeContainer = document.createElement('div');
                 swipeContainer.className = "swipe-container w3-animate-bottom";
-                swipeContainer.ontouchend = handleSwipe;
-
+                swipeContainer.ontouchend = handleSwipeRecipeEdit;
                 var swipeableElement = document.createElement('div');
                 swipeableElement.className = "swipe-element";
-
-                var quantitySpan = document.createElement('span');
-                quantitySpan.className = "swipe-element-spans";
-                quantitySpan.style.left="0";
-                quantitySpan.style.paddingLeft="8px";
-                quantitySpan.style.fontSize="16px";
-                quantitySpan.textContent= amount;
-
-                var measurementSpan = document.createElement('span');
-                measurementSpan.className ="swipe-element-spans";
-                measurementSpan.style.fontSize="18px";
-                measurementSpan.style.marginLeft="32px";
-                measurementSpan.style.lineHeight="80%";
-                measurementSpan.textContent = measurement;
             
                 var nameSpan = document.createElement('span');
                 nameSpan.className="swipe-element-spans";
-                nameSpan.style.right="0";
                 nameSpan.style.marginRight = "22px";
                 nameSpan.textContent = name;
                 
 
                 //add all the elements to the swipeable element
-                swipeableElement.appendChild(quantitySpan);
-                swipeableElement.appendChild(measurementSpan);
                 swipeableElement.appendChild(nameSpan);
 
                 swipeContainer.appendChild(swipeableElement);
@@ -1015,59 +1097,7 @@
                 addingNewIngredient=true;
             }
         }
-        addInstructionBtn.onclick = () => addInstructionConfirmInstruction();
-        function addInstructionConfirmInstruction(){
-            if(addingNewInstruction){
-                //confirm ingredient add
-                var instruction = newinstruction_text.value;
-                if(instruction==""){
-                    console.log("MISSING AN INPUT");
-                    return;
-                }
-                //get the table
-                const instructionTable=instructionsListContainer.getElementsByClassName("items")[0];
-                var swipeContainer = document.createElement('div');
-                swipeContainer.className = "swipe-container w3-animate-bottom";
-                swipeContainer.ontouchend = handleSwipe;
-
-                var swipeableElement = document.createElement('div');
-                swipeableElement.className = "swipe-element";
-
-                var instructionSpan = document.createElement('span');
-                instructionSpan.className = "swipe-element-spans";
-                instructionSpan.style.left="0";
-                instructionSpan.style.paddingLeft="8px";
-                instructionSpan.style.fontSize="16px";
-                instructionSpan.textContent= instruction;
-
-                //add all the elements to the swipeable element
-                swipeableElement.appendChild(instructionSpan);
-
-                swipeContainer.appendChild(swipeableElement);
-
-                //add right action to swipe element
-                var rightAction = document.createElement('div');
-                rightAction.className = "action right";
-                
-                var rightAction_i = document.createElement('i');
-                rightAction_i.className = "material-icons";
-                rightAction_i.textContent="remove_circle";
-                rightAction.appendChild(rightAction_i);
-                swipeContainer.appendChild(rightAction);
-
-                instructionTable.appendChild(swipeContainer); //add the entire swipe element to the fridge table
-                
-                addInstructionBtn.innerHTML = "Add Instruction";
-                instructionForm.hidden=true;
-                addingNewInstruction=false;
-
-            }
-            else{
-                instructionForm.hidden=false;
-                addInstructionBtn.innerHTML = "Confirm Instruction?"
-                addingNewInstruction=true;
-            }
-        }
+       
         closeAddRecipeBtn.onclick = () => {
             sharedRecipesTable.hidden=true;
                 myRecipes.hidden=false;
@@ -1087,9 +1117,8 @@
         //RECIPE HIGHLIGHT INPUT FIELDS
             //recipe highlight close button
         const recipeHighlight_CloseBtn = document.getElementById('recipeHighlight_CloseBtn');
-            //view ingredients table
-        const recipeHighlightIngredientBtn = document.getElementById('recipeHighlightIngredientBtn');
-            //view instructions table
+        const recipeHighlight_AddBtn = document.getElementById('recipeHighlight_AddBtn');
+
         const recipeHighlightInstructionBtn = document.getElementById('recipeHighlightInstructionBtn');
         const recipeHighlight_NameText = document.getElementById('recipeHighlightName');
     
@@ -1097,27 +1126,64 @@
             //recipe highlight container
         const recipesHighlight = document.getElementById('recipeHighlights');
             //ingredients table
-        const recipeHighlight_IngredientSect = document.getElementById('recipeHighlight_IngredientSect');
-            //instructions table
-        const recipeHighlight_InstructionSect = document.getElementById('recipeHighlight_InstructionSect');
+        const recipeHighlight_IngredientSect_Table = document.getElementById('recipeHighlight_IngredientSect_Table');
+
     
         //RECIPE HIGHLIGHT FUNCTIONALITY
-            //show ingredients table
-        recipeHighlightIngredientBtn.onclick =() => {
-            recipeHighlight_IngredientSect.hidden=false;
-            recipeHighlight_InstructionSect.hidden=true;
-        }
-            //show instructions table
-        recipeHighlightInstructionBtn.onclick =() => {
-            recipeHighlight_IngredientSect.hidden=true;
-            recipeHighlight_InstructionSect.hidden=false;
-        }  
             //close recipe highlight page
         recipeHighlight_CloseBtn.onclick=()=>{
             recipesHighlight.hidden=true;  //highlight section
             recipesSection.hidden=false; //general section
             addRecipesBtn.hidden=false;
+
+            recipeHighlight_AddBtn.className="inputbutton";
+            recipeHighlight_AddBtn.textContent="Add";
+            recipeHighlight_AddBtn.style="margin-left:44.6%;"
+
+            if(myrecipesUpdatePending){
+                populateRecipesTable("personal");
+                myrecipesUpdatePending=false;
+            }
+
         }
+            //add recipe to my recipes from shared
+            recipeHighlight_AddBtn.onclick=()=>{
+                //query recipe in shared recipes
+                var highlightedRecipeName = recipeHighlight_NameText.innerHTML;
+                if(sharedRecipesTable){
+                    //write to my recipes
+
+                    var foundRecipeToAdd =false;
+                    var newRecipeDoc = userProfile.ref.collection('myrecipes').doc(capitalizeFirstLetter(highlightedRecipeName).replaceAll(" ", "-"));
+                    recipes = firebase.firestore().collection('recipes').get();
+                    recipes.then((snapshot)=>{
+                        snapshot.forEach(item=>{
+                            let data = item.data();
+                            let recipeName = (item.id).replaceAll("-", " ");
+                            if(recipeName==highlightedRecipeName){
+                                //found it
+                                foundRecipeToAdd = true;
+                                newRecipeDoc.set({
+                                    'recipe-name': recipeName,
+                                    ingredients: data.ingredients
+                                });
+                                console.log("found recipe to add to myrecipes");
+                                console.log(data);
+                                myrecipesUpdatePending=true;
+                            }
+                        });
+                    });
+                
+                    //gray button + "Added"
+                    recipeHighlight_AddBtn.className="grayout";
+                    recipeHighlight_AddBtn.textContent="Added";
+                    recipeHighlight_AddBtn.style="margin-left:40%;"
+
+                    //if already added
+                    //gray button + "Already Added"
+                }
+               
+            }
       
     //-------------------------------------------------------------------------
     //-------------------------------END OF RECIPE PAGE------------------------
@@ -1153,7 +1219,7 @@
         //stores the previously clicked day to see if user pressed the same day twice (trigger close highlight)
     var previousClickedDayInt;
         //bool for if schedules page is open
-    var schedulePageOpen=false;
+    var schedulePageOpen=true;
     
         //CALENDAR INPUT FIELDS
         //CALENDAR CONTAINERS
@@ -1171,19 +1237,24 @@
         }
         function populateCalanderWithDays(){
             //JS CALENDARS COUNT SUN,MON,TUE,WED,THU,FRI,SAT
-            //                   0,1,2,3,4,5,6
-            var date = new Date(), y = date.getFullYear(), m = date.getMonth();
+            //                     0, 1,  2,  3,  4,  5,  6
+            var date = new Date(), y = date.getFullYear(), m = date.getMonth(); //get date
+            //get first and last day of month
             var firstDay = new Date(y, m, 1);
             var lastDay = new Date(y,m+1, 0);
+
+            setMonthTitle(m); //set title month of calandar
         
-            setMonthTitle(m);
-        
+            // create first row, insert blanks before first day
             var currentRow = calendar.insertRow(0);
-            var dayOfWeek = firstDay.getDay();
-            for(let i = 0; i<dayOfWeek-1; i++){
+            var dayOfWeek = firstDay.getDay(); //figure out which day of week the first day of month is (rememeber JS day of week start at 0 (sunday) -> 7 (saturday))
+            console.log(dayOfWeek);
+            for(let i = 0; i<dayOfWeek; i++){
                 let blankCell = currentRow.insertCell();
                 blankCell.innerHTML = "";
             }
+
+            
             var firstCell = currentRow.insertCell();
             let numberOfMonth = 1;
             let weekIndex = dayOfWeek; //this counts up to 7 then tells the loop to go to a new row
@@ -1192,6 +1263,8 @@
             firstCell.innerHTML = numberOfMonth;
             numberOfMonth = numberOfMonth+1;
             weekIndex = weekIndex+1;
+
+            if(weekIndex==7){weekIndex=0; currentRow = calendar.insertRow();}
         
             while(numberOfMonth<=parseInt(lastDay.getUTCDate())){
                 let newCell = currentRow.insertCell();
@@ -1199,8 +1272,8 @@
                 numberOfMonth = numberOfMonth+1;
                 weekIndex = weekIndex+1;
         
-                if(weekIndex==8){
-                    weekIndex=1;
+                if(weekIndex==7){
+                    weekIndex=0;
                     currentRow = calendar.insertRow();
                 }
         
@@ -1208,9 +1281,9 @@
                 
         
             }
-            if(weekIndex!=7){
+            if(weekIndex!=6){
                 //then there is missing spots at end of month
-                while(weekIndex<8){
+                while(weekIndex<=6){
                     let newCell = currentRow.insertCell();
                     newCell.innerHTML = "";
                     weekIndex+=1;
@@ -1251,6 +1324,60 @@
             schedulePage.hidden=schedulePageOpen;
             calendarWrapper.hidden=!schedulePageOpen;
             dayHighlightPopup.hidden=true;
+
+            if(schedulePageOpen){
+                loadPlans();
+            }
+            
+        }
+
+        function loadPlans(){
+            var plansDoc = userProfile.ref.collection('Meal Plan').get().then((snapshot)=>{
+                schedulePage.innerHTML="";
+                snapshot.forEach(item => {
+                    console.log(item.data());
+                    var newPlanBtn = document.createElement('button');
+                    newPlanBtn.className = "inputbutton";
+                    newPlanBtn.style.marginTop = "12px;";
+                    if(item.data().active==true){
+                        newPlanBtn.innerHTML = "Active: ";
+                    }
+                    else{
+                        newPlanBtn.innerHTML = "Select: ";
+                    }
+                    newPlanBtn.innerHTML+="Bananna Plan";
+                    schedulePage.appendChild(newPlanBtn);
+                });
+            });
+        }
+
+        //load day highlight for clicked day
+        function loadDayHighlight(dayofWeek){
+            var plansDoc = userProfile.ref.collection('Meal Plan').get().then((snapshot)=>{
+                snapshot.forEach(item => {
+                    if(item.data().active==true){
+                        console.log("found active plan");
+                        //find the day that matches day of week
+                        item.ref.collection('Week1').get().then((snapshot)=>{
+                            snapshot.forEach(day =>{
+                                if(day.id==dayOfWeekAsInteger(dayofWeek)){
+                                    //this is the correct day
+                                    //display data from week 1 -> day
+                                    console.log(day.data().Meals);
+                                    var breakfast = document.getElementById('mealPlanBreakfast');
+                                    var lunch = document.getElementById('mealPlanLunch');
+                                    var dinner = document.getElementById('mealPlanDinner');
+
+                                    breakfast.innerHTML = day.data().Meals.Breakfast;
+                                    lunch.innerHTML = day.data().Meals.Lunch;
+                                    dinner.innerHTML = day.data().Meals.Dinner;
+                                }
+                            });
+                        });
+                      
+                    }
+                });
+            });
         }
     
     //-------------------------------------------------------------------------
